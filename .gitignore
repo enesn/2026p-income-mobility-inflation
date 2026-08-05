@@ -5,3 +5,4 @@ outputs-included/*
 !outputs-included/.gitkeep
 
 cached-micro-data/*.csv
+.DS_Store
