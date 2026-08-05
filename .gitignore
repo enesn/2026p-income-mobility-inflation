@@ -1,0 +1,7 @@
+raw-micro-data/*
+!raw-micro-data/.gitkeep
+
+outputs-included/*
+!outputs-included/.gitkeep
+
+cached-micro-data/*.csv
