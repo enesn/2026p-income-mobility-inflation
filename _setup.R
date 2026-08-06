@@ -4,23 +4,42 @@
 # EI
 ## ==================================================================================================#
 
-library(tidyverse)
-library(openxlsx)
-library(readxl)
-library(Hmisc)
-library(purrr)
-library(lfe)
-library(kableExtra)
-library(dplyr)
-library(tidyr)
-library(knitr)
-library(httr2)
-library(jsonlite)
-library(readr)
-library(arrow)
-library(duckdb)
-library(DBI)
-library(haven)
+#Packages used across the project.
+required_packages <- c(
+  "tidyverse", "openxlsx", "readxl", "Hmisc", "purrr", "lfe", "kableExtra",
+  "dplyr", "tidyr", "knitr", "httr2", "jsonlite", "readr", "arrow", "duckdb",
+  "DBI", "haven"
+)
+
+#A mirror has to be named explicitly: Rscript starts with repos unset ("@CRAN@") and
+#install.packages() cannot fall back to a menu in a non-interactive session.
+cran_mirror <- getOption("repos")["CRAN"]
+if (is.na(cran_mirror) || !nzchar(cran_mirror) || cran_mirror == "@CRAN@") {
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
+}
+
+install_if_missing <- function(packages) {
+  is_available <- function(p) vapply(p, requireNamespace, logical(1), quietly = TRUE)
+
+  missing <- packages[!is_available(packages)]
+  if (length(missing) == 0) return(invisible(NULL))
+
+  message("Installing missing packages: ", paste(missing, collapse = ", "))
+  install.packages(missing)
+
+  failed <- missing[!is_available(missing)]
+  if (length(failed) > 0) {
+    stop("Could not install: ", paste(failed, collapse = ", "),
+         ". Install these manually and re-run.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
+install_if_missing(required_packages)
+
+invisible(lapply(required_packages, library, character.only = TRUE))
+
+rm(cran_mirror, install_if_missing)
 ## ==================================================================================================#
 
 options(scipen = 999, digits = 10)
