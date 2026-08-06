@@ -5,6 +5,54 @@
 ## ==================================================================================================#
 
 # ==================================================================================================#
+# Table A1, Mobility in table
+# ==================================================================================================#
+library(kableExtra)
+
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+
+class_mobility %>% 
+  filter(!is.na(p_labor_entry2_contribution)) %>%
+  filter(!type %in% c("Financier", "Rentier")) %>% 
+  mutate(
+    mobility = case_when(
+      upward_2yr == 1 ~ "Upward",
+      downward_2yr == 1 ~ "Downward",
+      TRUE ~ "Immobile"
+    )
+  ) %>% 
+  filter(income_year > 2011) %>%
+  group_by(type, income_year, mobility) %>% 
+  summarise(
+    n = sum(as.numeric(FK060_4)),
+    .groups = "drop"
+  ) %>%
+  group_by(type, income_year) %>% 
+  mutate(p = 100 * n / sum(n)) %>%
+  ungroup() %>%
+  select(type, income_year, mobility, p) %>%
+  pivot_wider(
+    names_from = mobility,
+    values_from = p
+  ) %>%
+  arrange(type, income_year) %>%
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    digits = 1,
+    caption = "Income mobility shares by class and year"
+  ) %>%
+  kableExtra::kable_styling(latex_options = c("hold_position")) %>%
+  kableExtra::collapse_rows(columns = 1, latex_hline = "major") %>%
+  kableExtra::add_header_above(
+    c(" " = 1, "Year" = 1, "Mobility states" = 3)
+  )
+
+
+# ==================================================================================================#
 # Table A2, Summary statistics
 # ==================================================================================================#
 # --------------  
