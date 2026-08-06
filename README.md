@@ -140,6 +140,14 @@ Both routes cache aggressively, so ingest is a one-off cost and later runs skip 
 The cache directory is gitignored. A missing cache is not an error — it just means the next run pays
 the ingest cost again.
 
+### Which version of the data to select
+
+The Dropbox folder holds the merged panel under dated folders, one per vintage. **The published
+results come from the May 2025 vintage: `/202505/silc0824.parquet`.** When the folder browser opens,
+open `202505` and select `silc0824.parquet`; picking any other vintage will not reproduce the numbers
+in the paper. That path is the one committed in [cached-micro-data/last_path](cached-micro-data/last_path),
+so it is also what a run reuses automatically once the file is cached.
+
 ---
 
 ## 4. Credentials for the online ingest route
@@ -176,58 +184,24 @@ after that, unattended runs work.
 
 ## 5. Versions
 
-Two branches matter.
+**`main`** is the baseline analysis as it stood **before the third revision was submitted to *Oxford
+Economic Papers***, and is the reference implementation.
 
-### `main` — baseline analysis
+**`cosmetic-for-better-replication`** (this branch) is cosmetic and speed work only — **no estimate,
+sample, specification or reported number changes.** Every refactor was made to produce output
+identical to `main`:
 
-The analysis exactly as it stood **before the third revision was submitted to *Oxford Economic
-Papers***. This is the reference implementation.
-
-### `cosmetic-for-better-replication` 
-
-**Cosmetic and performance work only. No estimate, sample, specification or reported number changes.**
-Every refactor below was made to produce output identical to `main`; the branch exists to make the
-package easier for a third party to run and much faster to run, not to alter the analysis.
-
-What changed:
-
-**Reproducibility**
-- `renv` added ([renv.lock](renv.lock), [renv/](renv/), [.Rprofile](.Rprofile)): the pinned package
-  versions are now restored automatically instead of "whatever CRAN serves today".
-- [_setup.R](_setup.R) separates attached packages from those only called as `pkg::fun()`, and
-  installs missing ones with an explicit CRAN mirror so `Rscript` does not fail on an unset repo.
-- [00-run-all.R](00-run-all.R) added: runs the whole pipeline in order with per-step timings. On
-  `main` the scripts had to be sourced one at a time by hand.
-- The ingest-source choice (§3) and the online ingest route
-  ([02-ingest-combined-micro.R](02-ingest-combined-micro.R)) are both new on this branch; `main` could
-  only rebuild from the raw releases.
-
-**Speed**
-- Within-person lags in [05-income-decomposition.R](05-income-decomposition.R) rewritten from
-  `group_by(FKIMLIK) %>% lag()` to a single whole-column shift (`lag_person()`), which is valid
-  because every person contributes exactly four consecutive sorted rows. Roughly a 100× speedup on the
-  heaviest step; household sums go through `rowsum()` in one call.
-- Ingest caching: the merged panel is cached as parquet, and csv downloads get a parquet sidecar, so
-  ingest is paid once rather than on every run.
-- [10-baseline-models.R](10-baseline-models.R) builds the estimation samples once and reuses them
-  across models, instead of repeating the same filter chain inside every `lm()` call, and selects down
-  to the columns the models need. Annual inflation is read once rather than once per model.
-- Dead code removed: unused table generation, the imputed-rent correction lookup, duplicated library
-  calls, a redundant 3-way interaction summary, and obsolete input files
-  (`imputed_rent_correction.xlsx`, `national_income_currentlcu.xlsx`, `tuik_wid_macrodata.xlsx`).
-
-**Readability**
-- The eleven near-identical raw-release blocks in [02-ingest-raw-micro.R](02-ingest-raw-micro.R)
-  collapsed into one loop over a release manifest; the manifest lives in `_setup.R` because
-  `00-run-all.R` also needs it to detect whether the raw data is present.
-- Seven repeated dominance/persistence column definitions in
-  [06-class-mobility.R](06-class-mobility.R) collapsed into one `across()`.
-- `step_header()` / `step_note()` / `saved_note()` throughout, so a run reads as an outline of the
-  analysis and states every file it writes.
-- Tables are now written to `.tex` files via `save_tex()` instead of only printing LaTeX to the
-  console.
-- Project title updated to "Relative Income Mobility around an Inflationary Shock" in every header.
+- **Reproducibility** — `renv` lockfile so package versions are pinned; `00-run-all.R` runs the whole
+  pipeline in order (on `main` the scripts were sourced one at a time by hand); the online ingest
+  route and the ingest-source choice (§3) are new, `main` could only rebuild from the raw releases.
+- **Speed** — within-person lags in `05` rewritten as a single column shift (`lag_person()`, ~100×
+  faster on the heaviest step); parquet caching so ingest is paid once; `10` builds each estimation
+  sample once instead of repeating the filter chain inside every `lm()`; dead code and obsolete input
+  files removed.
+- **Readability** — the eleven repeated raw-release blocks collapsed into one loop over a manifest;
+  seven repeated dominance/persistence definitions in `06` collapsed into one `across()`; progress
+  headers and `saved` notes throughout; tables written to `.tex` instead of only printed.
 
 To reproduce the pre-revision baseline instead, check out `main` and source the scripts by hand in
-numeric order — note that `main` has no `renv` lockfile, so package versions are whatever is installed.
+numeric order — `main` has no lockfile, so package versions are whatever is installed.
 
