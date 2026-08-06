@@ -48,7 +48,8 @@ class_mobility %>%
   kableExtra::collapse_rows(columns = 1, latex_hline = "major") %>%
   kableExtra::add_header_above(
     c(" " = 1, "Year" = 1, "Mobility states" = 3)
-  )
+  ) %>%
+  save_tex("outputs-included/tableA1-mobility-shares.tex")
 
 
 # ==================================================================================================#
@@ -99,7 +100,8 @@ class_mobility %>%
   stargazer::stargazer(
    as.data.frame(all_rank_changes),
     summary = TRUE,
-    type = "latex"
+    type = "latex",
+    out = "outputs-included/tableA2-panelA-summary-stats.tex"
   )
 # --------------
 # Panel B: Labor
@@ -127,7 +129,8 @@ class_mobility %>%
     ) 
   stargazer::stargazer(
     as.data.frame(lmarket_descriptive),
-    summary = TRUE
+    summary = TRUE,
+    out = "outputs-included/tableA2-panelB-labor-summary-stats.tex"
   )
 
 # ==================================================================================================#
@@ -136,4 +139,7 @@ class_mobility %>%
 
 step_note("Tables A3-A4: the full coefficient sets behind Fig 4")
 
-stargazer::stargazer(m2, m2upper, m2bottom)
+stargazer::stargazer(
+  m2, m2upper, m2bottom,
+  out = "outputs-included/tableA3A4-fig4-full-coefficients.tex"
+)

@@ -53,4 +53,5 @@ step_header("07 | Which income sources and margins drive the moves up and down (
 
 
 ggsave(filename = "outputs-included/fig5-contributions_by_mobility_2yr.pdf", plot = contributions_2yr, width = 10, height = 8, dpi = 300)
+saved_note("outputs-included/fig5-contributions_by_mobility_2yr.pdf")
 

@@ -88,4 +88,5 @@ step_note("Fig 2: shares moving up, down or nowhere between t-1 and t, by class"
     theme(axis.text.x = element_text(angle = 60, hjust = 1)))
 
 ggsave(filename = "outputs-included/fig2-class_2yrmobility_theta50.pdf", plot = mobility_of_class, width = 10, height = 8, dpi = 300)
+saved_note("outputs-included/fig2-class_2yrmobility_theta50.pdf")
 

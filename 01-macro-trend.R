@@ -75,4 +75,5 @@ step_header("01 | Macro trend: annual inflation 2013-2023, the three inflation r
     labs(y = "%", x= "Years", color = ""))
 
 ggsave(filename = "outputs-included/fig1-inflation.pdf", plot = inflation_fx, width = 10, height = 8, dpi = 300)
+saved_note("outputs-included/fig1-inflation.pdf")
 

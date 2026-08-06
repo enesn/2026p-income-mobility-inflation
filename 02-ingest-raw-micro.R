@@ -23,35 +23,13 @@ if (!rebuild_raw_cache && file.exists(RAW_CACHE_FILE)) {
 } else {
 
   ## ==================================================================================================#
-  # Each TUIK panel release ships the same four files (f = individual income, fk = individual register,
-  # h = household income, hk = household register), so all panels are read and merged the same way.
-  # The folder layout and the delimiter differ between releases.
-
-  panels <- tribble(
-    ~panel_dir,                                                 ~sep,
-    "raw-micro-data/GYKA_Panel_2008-2011/turkce/downloads",      NA,
-    "raw-micro-data/GYKA_Panel_2010-2013/downloads",             ";",
-    "raw-micro-data/GYKA_Panel_2012-2015/downloads",             ";",
-    "raw-micro-data/GYKA_Panel_2014-2017/turkce",                ";",
-    "raw-micro-data/GYKA_Panel_2015-2018/turkce",                ";",
-    "raw-micro-data/GYKA_Panel_2016-2019/Turkce",                ",",
-    "raw-micro-data/GYKA_Panel_2017-2020/veri_seti/csv",         ",",
-    "raw-micro-data/GYKA_Panel_2018-2021",                       ",",
-    "raw-micro-data/GYKA_Panel_2019-2022/csv",                   ",",
-    "raw-micro-data/GYKA_Panel_2020-2023/TURKÇE/csv",            ",",
-    "raw-micro-data/GYKA_Panel_2021-2024/csv_TURKÇE",            ","
-  )
+  # Every release holds the same four files, so all panels are read and merged the same way. The
+  # release list (raw_panel_releases) and the file-name matching live in _setup.R, because 00-run-all.R
+  # needs them too when it checks whether the raw releases are present at all.
 
   read_silc_panel <- function(panel_dir, sep) {
-    # File names are matched case-insensitively: the 2008-2011 release stores its
-    # individual income file as GYK08091011_F.csv while every other file is lower case.
     read_part <- function(suffix) {
-      path <- list.files(
-        panel_dir,
-        pattern = paste0("^gyk.*_", suffix, "\\.csv$"),
-        ignore.case = TRUE,
-        full.names = TRUE
-      )
+      path <- raw_panel_part_path(panel_dir, suffix)
       stopifnot(length(path) == 1)
       if (is.na(sep)) read_csv(path) else read.csv(path, sep = sep)
     }
@@ -68,7 +46,7 @@ if (!rebuild_raw_cache && file.exists(RAW_CACHE_FILE)) {
 
   cat("⏳ Building panel from raw releases (one-off):", RAW_CACHE_FILE, "\n")
 
-  silc_panels <- pmap(panels, read_silc_panel)
+  silc_panels <- pmap(raw_panel_releases, read_silc_panel)
 
   ## ==================================================================================================#
 
@@ -82,8 +60,9 @@ if (!rebuild_raw_cache && file.exists(RAW_CACHE_FILE)) {
 
   dir.create(dirname(RAW_CACHE_FILE), showWarnings = FALSE, recursive = TRUE)
   write_parquet(silc0824, RAW_CACHE_FILE, compression = "zstd")
+  saved_note(RAW_CACHE_FILE)
 
-  rm(panels, read_silc_panel, silc_panels)
+  rm(read_silc_panel, silc_panels)
 }
 
 rm(rebuild_raw_cache)

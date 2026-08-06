@@ -137,6 +137,7 @@ m2s <- bind_rows(
    )
 )
 ggsave(filename = "outputs-included/fig4-m2plot-theta50.pdf", plot = m2plot, width = 10, height = 8, dpi = 300)
+saved_note("outputs-included/fig4-m2plot-theta50.pdf")
 
 # ==================================================================================================#
 # Table 1, New Models in Response to Reviewer Comments in the First Round
@@ -172,7 +173,8 @@ modelsummary::modelsummary(
   ),
   stars = TRUE,
   output = "latex"
-)
+) %>%
+  save_tex("outputs-included/table1-class-inflation-interactions.tex")
 
 # =====================================================================================================#
 # Table 2, Class income reallocation in response to inflation, in response Reviewer 2's first round comment
@@ -200,7 +202,8 @@ modelsummary::modelsummary(
   ),
   stars = TRUE,
   output = "latex"
-)
+) %>%
+  save_tex("outputs-included/table2-extensive-margin-response.tex")
 
 # ==================================================================================================#
 # Table 3, Labor market adjusment
@@ -323,4 +326,8 @@ lm_model_3wayinteraction <- lm(
   weights = as.numeric(FK060_4_wmean)
 )
 
-stargazer::stargazer(lm_model_3wayinteraction)
+# Latex table
+stargazer::stargazer(
+  lm_model_3wayinteraction,
+  out = "outputs-included/table3-labor-market-adjustment.tex"
+)

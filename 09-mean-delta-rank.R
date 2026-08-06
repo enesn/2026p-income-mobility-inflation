@@ -30,4 +30,5 @@ step_header("09 | How far each class moves in the distribution, year by year (Fi
   theme(axis.text.x = element_text(angle = 90), axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16)))
   
 ggsave(filename = "outputs-included/fig3-mean-delta-rank.pdf", plot = mean_delta_rank, width = 10, height = 8, dpi = 300)
+saved_note("outputs-included/fig3-mean-delta-rank.pdf")
 

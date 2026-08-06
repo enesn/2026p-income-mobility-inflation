@@ -284,6 +284,7 @@ read_dropbox_file <- function(api_path, col_select = NULL, ..., use_cache = TRUE
       req_perform()
 
     writeBin(resp_body_raw(resp), local_file)
+    saved_note(local_file)
   }
 
   ext <- tolower(tools::file_ext(api_path))
@@ -307,6 +308,7 @@ read_dropbox_file <- function(api_path, col_select = NULL, ..., use_cache = TRUE
     cat("⏳ Parsing csv and writing parquet sidecar (one-off):", parquet_sidecar, "\n")
     parsed <- read_csv(local_file)
     arrow::write_parquet(parsed, parquet_sidecar, compression = "zstd")
+    saved_note(parquet_sidecar)
 
     if (!missing(col_select)) parsed <- dplyr::select(parsed, {{ col_select }})
     parsed
