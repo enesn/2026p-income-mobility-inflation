@@ -5,145 +5,51 @@
 ## ==================================================================================================#
 
 ## ==================================================================================================#
-  
-class_mobility <- 
+# Social classes
+## ==================================================================================================#
+
+# An income source is dominant in a person-year when its equal-split amount exceeds theta of that
+# year's equal-split income. A person belongs to the class of the first source, in the priority
+# order below, that is dominant in more of their four years than the persistence threshold.
+# The seven sources share the same recipe, so across() applies it once instead of spelling out
+# seven near-identical dominance and persistence columns.
+
+class_mobility <-
   income_decomposed %>%
-  mutate(
-    informallabor_income_dominance = ifelse(equal_split_informallabor/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    hourlywage_income_dominance = ifelse(equal_split_hourlylabor/equal_split_income >dominance_threshold_theta, 1, 0  ),
-    nonprofessionallabor_income_dominance = ifelse(equal_split_nonmanagernonprofessional_labor/equal_split_income > dominance_threshold_theta, 1, 0  ), 
-    publiclabor_income_dominance =ifelse(equal_split_publicseclabor/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    
-    owner = ifelse(HH020 == "1", 1, 0),
-    tenant = ifelse(HH020 == "2", 1, 0),
-    lodging = ifelse(HH020 == "3", 1, 0),
 
-    single = ifelse(HB050 == "1", 1, 0),
-    couple = ifelse(HB050 == "21", 1, 0),
-    couple_children = ifelse(HB050 == "22", 1, 0),
-    single_parent = ifelse(HB050 == "23", 1, 0),
-    extended = ifelse(HB050 == "3", 1, 0),
-    sharing = ifelse(HB050 == "4", 1, 0)
-     
-  ) %>%
-  group_by(FKIMLIK) %>%
+  # In how many of the person's years was each source dominant?
   mutate(
-    informallabor_income_persistence = sum(informallabor_income_dominance),
-    hourlywage_income_persistence = sum(hourlywage_income_dominance),
-    nonprofessionallabor_income_persistence = sum(nonprofessionallabor_income_dominance),
-    publiclabor_income_persistence = sum(publiclabor_income_dominance),
-    
-    owner_persistence = sum(owner),
-    tenant_persistence = sum(tenant),
-    lodging_persistence = sum(lodging),
+    across(
+      c(financial    = equal_split_financial,
+        rental       = equal_split_rental,
+        labor        = equal_split_labor,
+        pension      = equal_split_pension,
+        employer     = equal_split_employer,
+        selfemployer = equal_split_selfemployer,
+        transfer     = equal_split_transfers),
+      ~ sum(.x / equal_split_income > dominance_threshold_theta),
+      .names = "{.col}_years"
+    ),
+    .by = FKIMLIK
+  ) %>%
 
-    single_persistence = sum(single),
-    couple_persistence = sum(couple),
-    couplechildren_persistence = sum(couple_children),
-    singleparent_persistence = sum(single_parent),
-    extended_persistence = sum(extended),
-    sharing_persistence = sum(sharing)
-    
-  ) %>% 
-  
-ungroup() %>% 
-  
-  
   mutate(
-    financial_income_dominance = ifelse(equal_split_financial/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    rental_income_dominance = ifelse(equal_split_rental/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    labor_income_dominance = ifelse(equal_split_labor/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    pension_income_dominance = ifelse(equal_split_pension/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    transfer_income_dominance = ifelse(equal_split_transfers/equal_split_income > dominance_threshold_theta, 1, 0  ),
-    employer_income_dominance = ifelse(equal_split_employer/equal_split_income > dominance_threshold_theta, 1,0 ),
-    selfemployer_income_dominance = ifelse(equal_split_selfemployer/equal_split_income > dominance_threshold_theta, 1,0 ),
-    
-    
+    type = case_when(
+      # A household with no disposable income has no defined shares, and the counts above come out
+      # NA. Those people were left unclassified before and still are.
+      if_any(ends_with("_years"), is.na)         ~ NA_character_,
+      financial_years    > persistence_threshold ~ "Financier",
+      rental_years       > persistence_threshold ~ "Rentier",
+      labor_years        > persistence_threshold ~ "Laborer",
+      pension_years      > persistence_threshold ~ "Pensioner",
+      employer_years     > persistence_threshold ~ "Employer",
+      selfemployer_years > persistence_threshold ~ "Self-employer",
+      transfer_years     > persistence_threshold ~ "Transfer-Dependent",
+      .default = "Mixed"
+    )
   ) %>%
-  group_by(FKIMLIK) %>%
-  mutate(
-    financial_income_persistence = sum(financial_income_dominance),
-    rental_income_persistence = sum(rental_income_dominance),
-    labor_income_persistence = sum(labor_income_dominance),
-    pension_income_persistence = sum(pension_income_dominance),
-    transfer_income_persistence = sum(transfer_income_dominance),
-    employer_income_persistence = sum(employer_income_dominance),
-    selfemployer_income_persistence = sum(selfemployer_income_dominance)
-  ) %>% 
-  # select(FKIMLIK, income_year, equal_split_financial:equal_split_labor, equal_split_entrp,equal_split_pension,financial_income_dominance:employer_income_persistence) %>% View()
-  ungroup() %>% 
-  mutate(type = ifelse(financial_income_persistence > persistence_threshold , "Financier", 
-                       ifelse(rental_income_persistence  > persistence_threshold, "Rentier", 
-                              ifelse(labor_income_persistence   > persistence_threshold, "Laborer", 
-                                     ifelse(pension_income_persistence   > persistence_threshold, "Pensioner", 
-                                            ifelse(employer_income_persistence   > persistence_threshold, "Employer", 
-                                                   ifelse(selfemployer_income_persistence   > persistence_threshold, "Self-employer",       
-                                                          ifelse(transfer_income_persistence  > persistence_threshold, "Transfer-Dependent",
-                                                                 # ifelse(already_homeowner == 1,"Already Homeowner",
-                                                                 # ifelse(new_homeowner ==1, "New Homeowner",  
-                                                                 "Mixed")))))))) %>%
-  
-  left_join(
-    sample_silc %>%
-      group_by(HKIMLIK, FKIMLIK, FB010) %>%
-      summarise(
-        is_head = any(FK095 == 1),
-        ever_employed = any(FI010 < 5), # a small inconsistency in earlier years, resulting in inclusion of those in education
-        .groups = "drop"
-      ) %>%
-      group_by(HKIMLIK,FB010) %>%
-      summarise(
-        head_ever_employed = any(is_head & ever_employed),
-        num_nonhead_ever_employed = sum(!is_head & ever_employed),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        household_emp_status = case_when(
-          head_ever_employed & num_nonhead_ever_employed == 0 ~ "Only head works",
-          head_ever_employed & num_nonhead_ever_employed == 1 ~ "Head + 1 works",
-          head_ever_employed & num_nonhead_ever_employed >= 2 ~ "Head + 2 or more workers",
-          TRUE ~ "other"  # e.g., head not employed
-        )
-        
-      ) %>% mutate(income_year = as.numeric(FB010)-1) %>% select(-FB010), by = c("income_year","HKIMLIK")
-    
-) %>% 
-  
-  mutate(
-    head_only = ifelse(household_emp_status == "Only head works", 1, 0),
-    head_plus_1 = ifelse(household_emp_status == "Head + 1 works", 1, 0),
-    head_plus_2_or_more = ifelse(household_emp_status == "Head + 2 or more workers", 1, 0)
-  
-  ) %>%
-  group_by(FKIMLIK) %>%
-  mutate(
-    head_only_persistence = sum(head_only), 
-    head_plus_1_persistence = sum(head_plus_1), 
-    head_plus_2_or_more_persistence = sum(head_plus_2_or_more)
-    
-  )%>% ungroup()%>% 
-  
-  
-   mutate(labor_type = ifelse(informallabor_income_persistence > 2 , "Informal Laborer", 
-                                    ifelse(nonprofessionallabor_income_persistence   > 2, "Non-Professional/Non-Manager Laborer",
-                                           "Others/Mixed")),
-          
-          property_type = ifelse(owner_persistence == 4, "Owner",
-                                 ifelse(tenant_persistence == 4, "Tenant", 
-                                        ifelse(lodging_persistence == 4, "Lodging", "Others/Mixed"))), 
-          
-          family_type  = ifelse(single_persistence == 4, "Single", 
-                                ifelse(couple_persistence == 4, "Couples",
-                                       ifelse(couplechildren_persistence == 4, "Couples with children", 
-                                              ifelse(singleparent_persistence == 4, "Single parents", 
-                                                     ifelse(couple_persistence == 4, "Couples without children", 
-                                                            ifelse(extended_persistence == 4, "Extended", "Others/Mixed")))))),
-          
-          household_emp_type = ifelse(head_only_persistence > 2, "Only head works typically",
-                                      ifelse(head_plus_1_persistence > 2, "Head + 1 works typically",
-                                             ifelse(head_plus_2_or_more_persistence > 2, "Head + 2 or more works typically", "Others")))
-          
-          )
+
+  select(-ends_with("_years"))
 
 
 ## ==================================================================================================#
@@ -176,14 +82,10 @@ ungroup() %>%
 
 ggsave(filename = "outputs-included/fig2-class_2yrmobility_theta50.pdf", plot = mobility_of_class, width = 10, height = 8, dpi = 300)
 
-library(kableExtra)
-
-library(dplyr)
-library(tidyr)
 library(knitr)
 library(kableExtra)
 
-class_mobility %>% 
+class_mobility %>%
   filter(!is.na(p_labor_entry2_contribution)) %>%
   filter(!type %in% c("Financier", "Rentier")) %>% 
   mutate(
