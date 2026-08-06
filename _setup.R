@@ -5,11 +5,17 @@
 ## ==================================================================================================#
 
 #Packages used across the project.
-required_packages <- c(
+attached_packages <- c(
   "tidyverse", "openxlsx", "readxl", "Hmisc", "purrr", "lfe", "kableExtra",
   "dplyr", "tidyr", "knitr", "httr2", "jsonlite", "readr", "arrow", "duckdb",
   "DBI", "haven"
 )
+
+#Only ever called as pkg::fun() — fixest and modelsummary in 10, stargazer in 10 and 11, getPass in
+#02-ingest-combined-micro — so they must be installed but are deliberately not attached.
+namespace_packages <- c("fixest", "modelsummary", "stargazer", "getPass")
+
+required_packages <- c(attached_packages, namespace_packages)
 
 #A mirror has to be named explicitly: Rscript starts with repos unset ("@CRAN@") and
 #install.packages() cannot fall back to a menu in a non-interactive session.
@@ -35,11 +41,23 @@ install_if_missing <- function(packages) {
   invisible(NULL)
 }
 
-install_if_missing(required_packages)
+#With renv active the pinned versions in renv.lock are the source of truth, so restore those rather
+#than pulling whatever CRAN serves today. A fresh clone therefore only needs source("_setup.R"):
+#.Rprofile activates renv, and the restore below installs every version recorded in the lockfile.
+#The test is the library path rather than the lockfile, because a session started with --vanilla
+#skips .Rprofile: renv is then not active and restore() would have no project library to write to.
+renv_is_active <- any(grepl("renv/library", .libPaths(), fixed = TRUE))
 
-invisible(lapply(required_packages, library, character.only = TRUE))
+if (renv_is_active) {
+  renv::restore(prompt = FALSE)
+} else {
+  message("renv is not active; installing current CRAN versions rather than the pinned ones.")
+  install_if_missing(required_packages)
+}
 
-rm(cran_mirror, install_if_missing)
+invisible(lapply(attached_packages, library, character.only = TRUE))
+
+rm(cran_mirror, install_if_missing, renv_is_active)
 ## ==================================================================================================#
 
 options(scipen = 999, digits = 10)
@@ -49,6 +67,14 @@ options(scipen = 999, digits = 10)
 dominance_threshold_theta <- 0.5
 
 persistence_threshold <- 2
+
+## ==================================================================================================#
+#Progress headers. Each script announces itself with step_header(), and the longer ones mark their
+#internal stages with step_note(), so a full run reads as an outline of the analysis rather than a
+#silent wait. Named this way rather than step() to leave stats::step() alone.
+step_header <- function(...) cat("\n==> ", paste(...), "\n", sep = "")
+
+step_note <- function(...) cat("    - ", paste(...), "\n", sep = "")
 
 ## ==================================================================================================#
 ##to sum when some variables have missing values
