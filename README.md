@@ -89,7 +89,7 @@ folders exactly as TUIK distributes them and the paths will match.
 
 **b. The already-merged panel — served online, access-controlled.**
 The same eleven releases pre-merged into one file, fetched over the Dropbox API. This route exists so
-that a replicator who already holds valid official TUIK micro data access does not have to re-download
+that a replicator or a collaborator who already holds valid official TUIK micro data access does not have to re-download
 and re-merge eleven releases. See §4 for credentials.
 
 **c. Auxiliary macro data — included in the repo.**
@@ -139,6 +139,14 @@ Both routes cache aggressively, so ingest is a one-off cost and later runs skip 
 
 The cache directory is gitignored. A missing cache is not an error — it just means the next run pays
 the ingest cost again.
+
+**To start from a clean slate, delete `cached-micro-data/`.** That clears everything the project
+remembers about a machine at once: the cached panel and parquet sidecars, the remembered ingest route
+(`ingest-source`), the remembered Dropbox selection (`last_path`), and the cached credentials
+(`.dropbox_auth` / `.dropbox_refresh`). The next run then asks every question again from scratch.
+Individual files can be deleted on their own if only one preference needs resetting. Note that
+`last_path` is tracked in git, so restore it with `git checkout cached-micro-data/last_path` to get
+the May 2025 selection back without browsing for it.
 
 ### Which version of the data to select
 
