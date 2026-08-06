@@ -5,4 +5,6 @@ outputs-included/*
 !outputs-included/.gitkeep
 
 cached-micro-data/*.csv
+cached-micro-data/*.parquet
 .DS_Store
+cached-micro-data/.dropbox_refresh 
