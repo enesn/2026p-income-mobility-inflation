@@ -14,6 +14,11 @@
 # The seven sources share the same recipe, so across() applies it once instead of spelling out
 # seven near-identical dominance and persistence columns.
 
+step_header("06 | Social classes: the income source each person persistently lives on (Fig 2)")
+
+step_note(sprintf("A source is dominant above %g%% of equal-split income, in more than %d of the four years",
+                  dominance_threshold_theta * 100, persistence_threshold))
+
 class_mobility <-
   income_decomposed %>%
 
@@ -54,7 +59,9 @@ class_mobility <-
 
 ## ==================================================================================================#
 
-(mobility_of_class <- 
+step_note("Fig 2: shares moving up, down or nowhere between t-1 and t, by class")
+
+(mobility_of_class <-
     class_mobility %>% 
     filter(!is.na(p_labor_entry2_contribution)) %>%
     filter(!type == "Financier") %>% 

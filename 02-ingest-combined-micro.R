@@ -1,3 +1,5 @@
+step_header("02 | Ingest: SILC panel 2008-2024, read as one already-merged file from Dropbox")
+
 # ============================================================
 # LOCAL CACHE
 # ============================================================

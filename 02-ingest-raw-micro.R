@@ -9,6 +9,8 @@
 # result is cached as a parquet file: when that cache exists the raw folders are not touched at all.
 # Set rebuild_raw_cache <- TRUE before sourcing (or delete the cache file) to rebuild from raw.
 
+step_header("02 | Ingest: SILC panel 2008-2024, merged from the raw TUIK releases")
+
 RAW_CACHE_FILE <- "cached-micro-data/silc0824-from-raw.parquet"
 
 if (!exists("rebuild_raw_cache")) rebuild_raw_cache <- FALSE
@@ -69,6 +71,8 @@ if (!rebuild_raw_cache && file.exists(RAW_CACHE_FILE)) {
   silc_panels <- pmap(panels, read_silc_panel)
 
   ## ==================================================================================================#
+
+  step_note("Stacking the releases, dropping the person-years they share, counting years per person")
 
   silc0824 <- bind_rows(silc_panels) %>%
     distinct(FKIMLIK, FB010, .keep_all = TRUE)

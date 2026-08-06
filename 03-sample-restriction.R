@@ -6,8 +6,12 @@
 
 ## ==================================================================================================#
 
+step_header("03 | Sample restriction: balanced four-year panel of adults in stable households")
+
+  step_note("Keeping DINA adults who are sample persons seen in all four years")
+
   #Restriction
-  sample_silc <- silc0824 %>% 
+  sample_silc <- silc0824 %>%
   filter(times_seen == 4) %>% #keep individuals who were followed for four years
   filter(as.numeric(FK070) > 19) %>% #keep DINA adults
   filter(FK100 == "1") %>% #keep "Sample person" and exclude "co-residents"
@@ -25,6 +29,8 @@
     filter(!ALTORN == "22") #ALTORN 22 refers to 2008-2024
     
   
+  step_note("Dropping households whose size changes over the four years")
+
   #Keep households with the constant hh_size
   sample_silc <- sample_silc %>% left_join(
   sample_silc %>% 
@@ -64,7 +70,9 @@
   #using the 4-year panel weight coefficient variable (FK060_4).
   
   
-  sample_silc <- sample_silc %>% 
+  step_note("Carrying the TUIK 2-, 3- and 4-year panel weights back over all four years")
+
+  sample_silc <- sample_silc %>%
     arrange(FKIMLIK, desc(FB010)) %>% fill(FK060_2, .direction = "down") %>%
     fill(FK060_3, .direction = "down") %>% 
     fill(FK060_4, .direction = "down")

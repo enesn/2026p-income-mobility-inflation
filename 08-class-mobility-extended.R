@@ -8,6 +8,8 @@
 # Class mobility panel with more explanatory variables
 # ==================================================================================================#
 
+step_header("08 | Adding covariates: household head's education and occupation, and the minimum wage")
+
 class_mobility_ext <-
   class_mobility %>%
   # Household head's education and occupation. A missing occupation is read as "not a manager or

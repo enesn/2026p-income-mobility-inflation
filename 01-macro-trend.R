@@ -8,7 +8,9 @@
 # Figure 1 - Macro inflation trend
 # ==================================================================================================#
 
-(inflation_fx <- read_xlsx("other-input-data/evds_inflation_fxrate.xlsx") %>% 
+step_header("01 | Macro trend: annual inflation 2013-2023, the three inflation regimes (Fig 1)")
+
+(inflation_fx <-read_xlsx("other-input-data/evds_inflation_fxrate.xlsx") %>% 
     mutate(
       Date = as.Date(paste0(Date, "-01")),
       inflation = as.numeric(inflation),

@@ -12,6 +12,10 @@
 
 ## ==================================================================================================#
 
+step_header("05 | Decomposition: income deciles, decile transitions, and the income changes behind them")
+
+step_note("Weighted income deciles by year, and each person's own deciles and incomes one and three years back")
+
 income_decomposed <- income_defined %>%
   group_by(FB010) %>%
   mutate(
@@ -143,6 +147,8 @@ margin_class_nochange_lag <- function(x, x_lag, x_lag_nochange) {
   out
 }
 
+step_note("Classifying each income source as entry, exit, intensive or no change, and sizing the change")
+
 # Each lag is computed once here and reused by both the margin and the delta blocks.
 margin_vars <- c("personal_labor_income", "personal_pension_income", "personal_employer_income",
                  "personal_selfemployer_income", "personal_transfer_income", "hh_rental_income",
@@ -270,6 +276,8 @@ rm(L1, L3)
 # The personal deltas are summed within household-year; the household-level ones are already at
 # that level and only need dividing. rowsum() does all thirty sums in a single pass, replacing
 # thirty grouped sum() calls.
+step_note("Splitting those changes over household members, as shares of the household's total change")
+
 person_delta_cols <- c(
   "p_pension_delta_intensive4", "p_labor_delta_intensive4", "p_employer_delta_intensive4",
   "p_selfemployer_delta_intensive4", "p_transfer_delta_intensive4",

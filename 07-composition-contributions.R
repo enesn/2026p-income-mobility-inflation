@@ -4,6 +4,8 @@
 # EI
 ## ==================================================================================================#
 
+step_header("07 | Which income sources and margins drive the moves up and down (Fig 5)")
+
 (contributions_2yr <- class_mobility %>%
     filter(!is.na(p_pension_entry2_contribution)) %>%
     filter(income_year > 2011) %>% 

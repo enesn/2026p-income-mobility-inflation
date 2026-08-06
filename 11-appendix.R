@@ -9,7 +9,11 @@
 # ==================================================================================================#
 
 
-class_mobility %>% 
+step_header("11 | Appendix: Tables A1-A4")
+
+step_note("Table A1: the Fig 2 mobility shares as a table")
+
+class_mobility %>%
   filter(!is.na(p_labor_entry2_contribution)) %>%
   filter(!type %in% c("Financier", "Rentier")) %>% 
   mutate(
@@ -53,6 +57,8 @@ class_mobility %>%
 # --------------  
 # Panel A: All
 # --------------
+  step_note("Table A2, panel A: rank changes and class shares over the whole sample")
+
   all_rank_changes <- class_mobility_ext %>%
     filter(income_year > 2011) %>%
     mutate(delta_rank = deciles2 - decile_prev1) %>% 
@@ -98,6 +104,8 @@ class_mobility %>%
 # --------------
 # Panel B: Labor
 # --------------
+  step_note("Table A2, panel B: the labor market variables behind Table 3")
+
    lmarket_descriptive <- lmarket_panel %>%
     filter(income_year > 2011) %>%
     mutate(delta_rank = deciles2 - decile_prev1) %>%
@@ -125,5 +133,7 @@ class_mobility %>%
 # ==================================================================================================#
 # Tables A3-A4, Full coefficients for the model presented in Fig 4
 # ==================================================================================================#
+
+step_note("Tables A3-A4: the full coefficient sets behind Fig 4")
 
 stargazer::stargazer(m2, m2upper, m2bottom)

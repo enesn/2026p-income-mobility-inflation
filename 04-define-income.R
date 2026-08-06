@@ -4,9 +4,13 @@
 # EI
 ## ==================================================================================================#
 
+step_header("04 | Income definitions: personal, household and equal-split income, in real terms")
+
 ## ==================================================================================================#
 # Personal income
 ## ==================================================================================================#
+
+step_note("Personal income by source, and which kind of earner each person counts as")
 
 income_defined <-
   sample_silc %>%
@@ -71,6 +75,8 @@ income_defined <-
 ## ==================================================================================================#
 # Household income
 ## ==================================================================================================#
+
+step_note("Summing to the household-year, adding rent, interest and imputed rent")
 
 income_defined <-
   income_defined %>%
@@ -185,3 +191,5 @@ income_defined <-
       .names = "real_{.col}"
     )
   )
+
+step_note("Household aggregates split over members and deflated to December 2003 prices")

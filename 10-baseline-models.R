@@ -8,8 +8,12 @@
 # Estimation samples
 # ==================================================================================================#
 
+step_header("10 | Baseline models: does inflation move classes around the distribution? (Fig 4, Tables 1-3)")
+
+step_note("Estimation samples: household-years after 2011, dropping the two classes too small to estimate")
+
 # Every model below is fitted on the same underlying sample: household-years after 2011, outside the
-# two classes that are too small to estimate, one row per household and year. 
+# two classes that are too small to estimate, one row per household and year.
 
 model_base <-
   class_mobility_ext %>%
@@ -60,6 +64,8 @@ inflation_sample <- rank_sample %>% left_join(annual_inflation, by = "income_yea
 # ==================================================================================================#
 # Fig 4, 2-year relative positional changes of social classes
 # ==================================================================================================#
+
+step_note("Fig 4: class-by-year decile change, for all deciles and for the top 3 and bottom 7 apart")
 
 # All deciles
 m2 <- lm(
@@ -136,6 +142,8 @@ ggsave(filename = "outputs-included/fig4-m2plot-theta50.pdf", plot = m2plot, wid
 # Table 1, New Models in Response to Reviewer Comments in the First Round
 # ==================================================================================================#
 
+step_note("Table 1: class times inflation, class times post-2021, and the same with household fixed effects")
+
 # Equation 3
 pi_x_class <- lm(
   delta_rank ~ as.factor(type) * log(annual_inflation) + as.factor(decile_prev1),
@@ -170,6 +178,8 @@ modelsummary::modelsummary(
 # Table 2, Class income reallocation in response to inflation, in response Reviewer 2's first round comment
 # =====================================================================================================#
 
+step_note("Table 2: whether classes take up labor or self-employment income after 2021")
+
 # Ext.labor
 labor_extensive_margin_response <- lm(
   entry_into_laborincome ~ as.factor(type) * as.factor(post_2021),
@@ -195,6 +205,8 @@ modelsummary::modelsummary(
 # ==================================================================================================#
 # Table 3, Labor market adjusment
 # ==================================================================================================#
+
+step_note("Table 3: how laborer households adjust — hours, months, job changes, informality, minimum wage")
 
 # Labor market sample restriction
 lmarket_panel <-

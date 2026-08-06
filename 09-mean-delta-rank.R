@@ -8,7 +8,9 @@
 # Figure 3, Mean change in income decile by social class
 # ==================================================================================================#
 
-(mean_delta_rank <- class_mobility_ext %>% 
+step_header("09 | How far each class moves in the distribution, year by year (Fig 3)")
+
+(mean_delta_rank <- class_mobility_ext %>%
   filter(income_year > 2011) %>%
   filter(!type == "Rentier") %>% 
   filter(!type == "Financier") %>% 
