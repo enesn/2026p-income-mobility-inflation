@@ -7,12 +7,7 @@
 # ==================================================================================================#
 # Table A1, Mobility in table
 # ==================================================================================================#
-library(kableExtra)
 
-library(dplyr)
-library(tidyr)
-library(knitr)
-library(kableExtra)
 
 class_mobility %>% 
   filter(!is.na(p_labor_entry2_contribution)) %>%
