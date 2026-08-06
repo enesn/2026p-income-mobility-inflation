@@ -10,7 +10,17 @@ library(readxl)
 library(Hmisc)
 library(purrr)
 library(lfe)
-
+library(kableExtra)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(httr2)
+library(jsonlite)
+library(readr)
+library(arrow)
+library(duckdb)
+library(DBI)
+library(haven)
 ## ==================================================================================================#
 
 options(scipen = 999, digits = 10)
