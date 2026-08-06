@@ -101,16 +101,11 @@ income_defined <-
     by = join_by(HKIMLIK, FB010)
   ) %>%
 
-  left_join(
-    read_xlsx("other-input-data/imputed_rent_correction.xlsx") %>% mutate(FB010 = as.character(FB010)),
-    by = join_by(FB010)
-  ) %>%
-
   mutate(
+    # Imputed rent as reported, with sign errors folded to positive and missings read as zero.
     imputed_rent = as.numeric(HG010),
     imputed_rent = ifelse(imputed_rent < 0, imputed_rent * (-1), imputed_rent),
     imputed_rent = ifelse(is.na(imputed_rent), 0, imputed_rent),
-    # imputed_rent = imputed_rent * imprent_upgrade_factor,
 
     # Total disposable household income. HG030-HG060 are the household-level transfers,
     # HG070 rent, HG080 interest.
