@@ -310,6 +310,5 @@ lm_model_3wayinteraction <- lm(
 
   weights = as.numeric(FK060_4_wmean)
 )
-summary(lm_model_3wayinteraction)
 
 stargazer::stargazer(lm_model_3wayinteraction)
