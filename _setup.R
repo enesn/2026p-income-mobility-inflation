@@ -76,6 +76,70 @@ step_header <- function(...) cat("\n==> ", paste(...), "\n", sep = "")
 
 step_note <- function(...) cat("    - ", paste(...), "\n", sep = "")
 
+#ggsave() and write_parquet() are silent, so a run would otherwise never say where anything landed.
+#The file is checked rather than assumed, so a path that has drifted from the write above it says so
+#instead of confirming a file that is not there.
+saved_note <- function(path) {
+  if (file.exists(path)) step_note("saved:", path) else step_note("NOT saved:", path)
+}
+
+## ==================================================================================================#
+#Tables are written next to the figures in outputs-included/, so a run leaves a .tex the paper can
+#\input{} rather than latex to copy out of the console. The table object is returned visibly, so
+#wrapping a call in save_tex() still prints it as before. stargazer writes its own file through out=
+#and is the one table function called without this helper.
+save_tex <- function(x, path) {
+  writeLines(as.character(x), path)
+  x
+}
+
+## ==================================================================================================#
+#Raw TUIK panel releases. Each release ships the same four files (f = individual income,
+#fk = individual register, h = household income, hk = household register); only the folder layout and
+#the delimiter differ. The table lives here rather than in 02-ingest-raw-micro.R because 00-run-all.R
+#also needs it, to decide whether this machine actually has the raw releases to ingest.
+raw_panel_releases <- tribble(
+  ~panel_dir,                                                 ~sep,
+  "raw-micro-data/GYKA_Panel_2008-2011/turkce/downloads",      NA,
+  "raw-micro-data/GYKA_Panel_2010-2013/downloads",             ";",
+  "raw-micro-data/GYKA_Panel_2012-2015/downloads",             ";",
+  "raw-micro-data/GYKA_Panel_2014-2017/turkce",                ";",
+  "raw-micro-data/GYKA_Panel_2015-2018/turkce",                ";",
+  "raw-micro-data/GYKA_Panel_2016-2019/Turkce",                ",",
+  "raw-micro-data/GYKA_Panel_2017-2020/veri_seti/csv",         ",",
+  "raw-micro-data/GYKA_Panel_2018-2021",                       ",",
+  "raw-micro-data/GYKA_Panel_2019-2022/csv",                   ",",
+  "raw-micro-data/GYKA_Panel_2020-2023/TURKÇE/csv",            ",",
+  "raw-micro-data/GYKA_Panel_2021-2024/csv_TURKÇE",            ","
+)
+
+raw_panel_parts <- c("f", "fk", "h", "hk")
+
+#File names are matched case-insensitively: the 2008-2011 release stores its individual income file
+#as GYK08091011_F.csv while every other file is lower case.
+raw_panel_part_path <- function(panel_dir, suffix) {
+  list.files(
+    panel_dir,
+    pattern = paste0("^gyk.*_", suffix, "\\.csv$"),
+    ignore.case = TRUE,
+    full.names = TRUE
+  )
+}
+
+#TRUE only when every release is present with all four of its files, i.e. when 02-ingest-raw-micro.R
+#could actually run. A half-extracted raw-micro-data/ counts as not available: it would otherwise
+#fail deep inside the merge rather than at the choice of ingest route.
+raw_micro_data_complete <- function() {
+  release_is_complete <- function(panel_dir) {
+    dir.exists(panel_dir) &&
+      all(vapply(raw_panel_parts,
+                 function(suffix) length(raw_panel_part_path(panel_dir, suffix)) == 1,
+                 logical(1)))
+  }
+
+  all(vapply(raw_panel_releases$panel_dir, release_is_complete, logical(1)))
+}
+
 ## ==================================================================================================#
 ##to sum when some variables have missing values
 `%+%` <- function(x, y)  mapply(sum, x, y, MoreArgs = list(na.rm = TRUE))
