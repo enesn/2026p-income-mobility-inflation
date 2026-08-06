@@ -196,14 +196,16 @@ rule("=")
 cat(progress_bar(1, 1), "  run complete in ", format_duration(total_seconds), "\n", sep = "")
 rule("=")
 
-step_timings$share <- step_timings$seconds / sum(step_timings$seconds)
+# A bar of where the time went. It is scaled to the slowest step rather than to the total: with a
+# dozen steps no single one is a large share of the run, so bars drawn against the total all come out
+# the same length and say nothing.
+step_timings$share <- step_timings$seconds / max(step_timings$seconds)
 
 for (i in seq_len(nrow(step_timings))) {
   cat(sprintf("  %-32s %12s  %s\n",
               step_timings$script[i],
               format_duration(step_timings$seconds[i]),
-              # A ten-cell bar of where the time actually went, so the slow step is obvious.
-              strrep("#", max(1, round(10 * step_timings$share[i])))))
+              strrep("#", max(1, round(20 * step_timings$share[i])))))
 }
 
 rule("-")
