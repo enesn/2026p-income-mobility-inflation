@@ -144,9 +144,7 @@ the ingest cost again.
 remembers about a machine at once: the cached panel and parquet sidecars, the remembered ingest route
 (`ingest-source`), the remembered Dropbox selection (`last_path`), and the cached credentials
 (`.dropbox_auth` / `.dropbox_refresh`). The next run then asks every question again from scratch.
-Individual files can be deleted on their own if only one preference needs resetting. Note that
-`last_path` is tracked in git, so restore it with `git checkout cached-micro-data/last_path` to get
-the May 2025 selection back without browsing for it.
+Individual files can be deleted on their own if only one preference needs resetting.
 
 ### Which version of the data to select
 
@@ -163,7 +161,7 @@ so it is also what a run reuses automatically once the file is cached.
 Nothing secret is stored in this repository, and no key or token is committed anywhere.
 
 The `combined` route reaches a copy of the merged panel held on Dropbox. **That copy is only made
-available to replicators who already hold valid, current official TUIK micro data access.** It is not
+available to replicators or collaborators who already hold valid, current official TUIK micro data access.** It is not
 an alternative to the TUIK access agreement — it is a convenience for people who are already entitled
 to the data.
 
@@ -172,17 +170,9 @@ author, and include evidence of your TUIK micro data access agreement in the req
 will not be issued otherwise. The corresponding author's contact address is the one listed on the
 paper.
 
-[02-ingest-combined-micro.R](02-ingest-combined-micro.R) accepts two credential shapes and works out
-which one it was handed by probing the API, not by parsing the string:
 
-| Mode | You provide | Behaviour |
-|---|---|---|
-| **Replicator** | A short-lived Dropbox access token | Cached in `cached-micro-data/.dropbox_auth`. When it expires you are prompted again — there is nothing to renew it with. |
-| **Pipeline** | A refresh token, plus app key and secret | Cached in `cached-micro-data/.dropbox_refresh`. Dropbox refresh tokens do not expire, so every later run silently mints a fresh access token with no prompt. |
-
-Both cache files are written owner-read-only (`0600`) and are gitignored. Delete either file to force
-a fresh prompt. Credentials are prompted for through `getPass` so they are not echoed to the terminal
-or captured in the session history.
+Cache files are written owner-read-only (`0600`) and are gitignored. Delete either file to force
+a fresh prompt. 
 
 Note that `Rscript 00-run-all.R` cannot answer a prompt. On a machine that needs the `combined` route
 with a cold cache, run the ingest once interactively to populate the cache and the credential file;
