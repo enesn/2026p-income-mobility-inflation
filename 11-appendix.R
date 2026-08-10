@@ -13,30 +13,16 @@ step_header("11 | Appendix: Tables A1-A4")
 
 step_note("Table A1: the Fig 2 mobility shares as a table")
 
-class_mobility %>%
-  filter(!is.na(p_labor_entry2_contribution)) %>%
-  filter(!type %in% c("Financier", "Rentier")) %>% 
-  mutate(
-    mobility = case_when(
-      upward_2yr == 1 ~ "Upward",
-      downward_2yr == 1 ~ "Downward",
-      TRUE ~ "Immobile"
-    )
-  ) %>% 
-  filter(income_year > 2011) %>%
-  group_by(type, income_year, mobility) %>% 
-  summarise(
-    n = sum(as.numeric(FK060_4)),
-    .groups = "drop"
-  ) %>%
-  group_by(type, income_year) %>% 
-  mutate(p = 100 * n / sum(n)) %>%
-  ungroup() %>%
+# The shares themselves are the ones 06-class-mobility.R plots as Fig 2; this only reshapes them.
+mobility_of_class_shares %>%
+  mutate(mobility = str_to_title(mobility)) %>%
   select(type, income_year, mobility, p) %>%
+  mutate(p = 100 * p) %>%
   pivot_wider(
     names_from = mobility,
     values_from = p
   ) %>%
+  relocate(Upward, Downward, Immobile, .after = income_year) %>%
   arrange(type, income_year) %>%
   kable(
     format = "latex",
