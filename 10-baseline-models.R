@@ -143,6 +143,7 @@ saved_note("outputs-included/fig4-m2plot-theta50.pdf")
 # Table 1, New Models in Response to Reviewer Comments in the First Round
 # ==================================================================================================#
 
+
 step_note("Table 1: class times inflation, class times post-2021, and the same with household fixed effects")
 
 # Equation 3
@@ -159,51 +160,343 @@ did_post2021 <- lm(
 
 # Equation 5
 # Observe the same household over time, but make sure no household shows up twice in a given year.
+#
+# Class is fixed over the four years a household is observed, so its main effect is collinear with the
+# household fixed effect and is not identified here: written as as.factor(type) * post_2021, fixest
+# dropped some of those main effects and returned the rest with standard errors in the millions, which
+# is what the table used to print. i() asks for the class-by-post-2021 interactions alone, which are
+# the identified terms and come out numerically identical to what the interaction rows held before.
+# The post-2021 main effect is absorbed by the year fixed effect either way.
 hhlevel_fe <- fixest::feols(
-  deciles2 ~ as.factor(type) * post_2021 | HKIMLIK + income_year,
+  deciles2 ~ i(type, post_2021, ref = "Employer") | HKIMLIK + income_year,
   data = fe_sample, weights = ~ as.numeric(FK060_4)
 )
 
+# --------------------------------------------------
+# In response to Reviewer 2's "Inference" comment in round three
+# --------------------------------------------------
+
+# Naive collapse: "aggregate the data to the group-year level
+# (by taking the mean of the dependent variable within each cell)
+# and re-estimate the data on cell- means."
+
+step_note("Table 1 robustness: equation 4 re-estimated on class-year cell means")
+
+class_year_cells <-
+  inflation_sample %>%
+  summarise(
+    delta_rank   = weighted.mean(delta_rank, w = as.numeric(FK060_4)),
+    cell_weight  = sum(as.numeric(FK060_4)),
+    n_households = n(),
+    .by = c(type, income_year)
+  ) %>%
+  mutate(post_2021 = ifelse(income_year > 2021, 1, 0))
+
+step_note(sprintf("%d class-year cells over %d classes and %d years; smallest cell holds %d households",
+                  nrow(class_year_cells), n_distinct(class_year_cells$type),
+                  n_distinct(class_year_cells$income_year), min(class_year_cells$n_households)))
+
+# Each cell mean is estimated off a different number of households, so the cell regression is
+# weighted by the population its cell stands for
+did_post2021_cellmeans <- lm(
+  delta_rank ~ as.factor(type) * as.factor(post_2021),
+  data = class_year_cells, weights = cell_weight
+)
+
+# The collapse above has to drop the origin-decile control, since decile_prev1 varies inside a cell
+# and has no cell-level counterpart. 
+decile_adjustment <- lm(
+  delta_rank ~ as.factor(decile_prev1),
+  data = inflation_sample, weights = as.numeric(FK060_4), na.action = na.exclude
+)
+
+class_year_cells_adj <-
+  inflation_sample %>%
+  mutate(delta_rank_adj = residuals(decile_adjustment)) %>%
+  filter(!is.na(delta_rank_adj)) %>%
+  summarise(
+    delta_rank_adj = weighted.mean(delta_rank_adj, w = as.numeric(FK060_4)),
+    cell_weight    = sum(as.numeric(FK060_4)),
+    .by = c(type, income_year)
+  ) %>%
+  mutate(post_2021 = ifelse(income_year > 2021, 1, 0))
+
+
+did_post2021_cellmeans_adj <- lm(
+  delta_rank_adj ~ as.factor(type) * as.factor(post_2021),
+  data = class_year_cells_adj, weights = cell_weight
+)
+
 # Latex table
-modelsummary::modelsummary(
-  list(
-    "(3)" = pi_x_class,
-    "(4)" = did_post2021,
-    "(5)" = hhlevel_fe
+# Same treatment as Table 2 below: readable row labels, the origin-decile dummies folded into a single
+# line at the foot instead of forty rows of controls, and the table shrunk to the text width if the row
+# labels push it over.
+tidy_table1_name <- function(x) {
+  x %>%
+    str_replace_all(fixed("as.factor(type)"), "") %>%
+    str_replace_all(fixed("type::"), "") %>%
+    str_replace_all(fixed("as.factor(post_2021)1"), "Post-2021") %>%
+    str_replace_all("\\bpost_2021\\b", "Post-2021") %>%
+    str_replace_all(fixed("log(annual_inflation)"), "Log inflation") %>%
+    str_replace_all(fixed("×"), "$\\times$") %>%
+    str_replace_all(fixed(":"), " $\\times$ ")
+}
+
+# The fixed-effects rows come out of fixest's own glance(), so they are named by the variable they
+# absorb; the rest of modelsummary's default fit statistics (AIC, BIC, log-likelihood, RMSE, the within
+# R2) say nothing the paper uses and are dropped.
+table1_gof <- tribble(
+  ~raw,              ~clean,                    ~fmt,
+  "nobs",            "Observations",            0,
+  "r.squared",       "R$^2$",                   3,
+  "FE: HKIMLIK",     "Household fixed effects", 0,
+  "FE: income_year", "Year fixed effects",      0
+)
+
+stars_note_option <- getOption("modelsummary_stars_note")
+options(modelsummary_stars_note = FALSE)
+
+table1_body <-
+  modelsummary::modelsummary(
+    list(
+      "(3)" = pi_x_class,
+      "(4)" = did_post2021,
+      "(5)" = hhlevel_fe,
+      "(6)" = did_post2021_cellmeans_adj #newly added
+    ),
+    stars       = TRUE,
+    coef_rename = tidy_table1_name,
+    coef_omit   = "decile_prev1",
+    gof_map     = table1_gof,
+    # Equation 5 holds the origin decile fixed through the household effect; equation 6 cannot carry a
+    # decile dummy at all, and nets the deciles out of the dependent variable before collapsing.
+    add_rows    = tibble(
+      term  = "Origin decile dummies",
+      `(3)` = "X", `(4)` = "X", `(5)` = "", `(6)` = "residualised"
+    ),
+    output      = "tinytable"
+  ) %>%
+  tinytable::theme_latex(
+    environment_table = FALSE,
+    resize_width      = 1,
+    resize_direction  = "down"
+  ) %>%
+  tinytable::save_tt("latex")
+
+options(modelsummary_stars_note = stars_note_option)
+
+table1_note <- paste(
+  c(
+    "\\textit{Notes:}",
+    "+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001."
   ),
-  stars = TRUE,
-  output = "latex"
+  collapse = "\n"
+)
+
+paste0(
+  "\\begin{table}[htbp]\n",
+  "\\centering\n",
+  "\\caption{Relative income mobility by class, against inflation and against the\n",
+  "         post-2021 break}\n",
+  "\\label{tab:class-inflation-interactions}\n",
+  table1_body,
+  "\n\n\\begin{minipage}{\\linewidth}\n",
+  "\\footnotesize\n",
+  "\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{0.5em}\n",
+  table1_note,
+  "\n\\end{minipage}\n",
+  "\\end{table}\n"
 ) %>%
   save_tex("outputs-included/table1-class-inflation-interactions.tex")
 
 # =====================================================================================================#
-# Table 2, Class income reallocation in response to inflation, in response Reviewer 2's first round comment
+# Table 2, Class income reallocation in response to inflation, in response to Reviewer 2's first round comment
 # =====================================================================================================#
 
-step_note("Table 2: whether classes take up labor or self-employment income after 2021")
+# --------------------------------------------------------------------------------------------------
+# In response to Reviewer 2's "Extensive Margin Table" comment in round three
+# --------------------------------------------------------------------------------------------------
+# Ingore persistence-based definition of class, just focus on annual dominant income to define a class.
 
-# Ext.labor
-labor_extensive_margin_response <- lm(
-  entry_into_laborincome ~ as.factor(type) * as.factor(post_2021),
-  data = margin_sample, weights = as.numeric(FK060_4)
+step_note("Annual classes: how the household income mix responds to inflation, class fixed at t-1")
+
+# The annual class. 06 asks which source was dominant in more than `persistence_threshold` of the
+# four years; here the same dominance test is applied to year t alone:
+
+class_annual_panel <-
+  class_mobility %>%
+  arrange(FKIMLIK, income_year) %>%
+
+  mutate(
+    across(
+      c(financial    = equal_split_financial,
+        rental       = equal_split_rental,
+        labor        = equal_split_labor,
+        pension      = equal_split_pension,
+        employer     = equal_split_employer,
+        selfemployer = equal_split_selfemployer,
+        transfer     = equal_split_transfers),
+      ~ .x / equal_split_income > dominance_threshold_theta,
+      .names = "{.col}_dominant"
+    ),
+
+    class_annual = case_when(
+      if_any(ends_with("_dominant"), is.na) ~ NA_character_,
+      financial_dominant                    ~ "Financier",
+      rental_dominant                       ~ "Rentier",
+      labor_dominant                        ~ "Laborer",
+      pension_dominant                      ~ "Pensioner",
+      employer_dominant                     ~ "Employer",
+      selfemployer_dominant                 ~ "Self-employer",
+      transfer_dominant                     ~ "Transfer-Dependent",
+      .default = "Mixed"
+    )
+  ) %>%
+
+  # Each person contributes four consecutive years, so a within-person lag is a shift; `adjacent`
+  # only guards the first year of each spell, where there is no t-1 to read.
+  mutate(
+    adjacent           = income_year - lag(income_year) == 1,
+    class_annual_prev1 = if_else(adjacent, lag(class_annual), NA_character_),
+    .by = FKIMLIK
+  ) %>%
+
+  select(-ends_with("_dominant"), -adjacent)
+
+# One row per household-year, as everywhere else in this script, carrying the class the household
+# held the year before and the inflation it then met.
+annual_class_hh <-
+  class_annual_panel %>%
+  distinct(HKIMLIK, income_year, .keep_all = TRUE) %>%
+  select(HKIMLIK, income_year, type, FK060_4, class_annual, class_annual_prev1)
+
+too_small_to_estimate <- c("Financier", "Rentier")
+
+mix_change_sample <-
+  annual_class_hh %>%
+  filter(income_year > 2011) %>%
+  filter(!type == "Rentier") %>%
+  filter(!type == "Financier") %>%
+  filter(!is.na(class_annual), !is.na(class_annual_prev1)) %>%
+  filter(!class_annual_prev1 %in% too_small_to_estimate) %>%
+  mutate(
+    post_2021    = ifelse(income_year > 2021, 1, 0),
+    changed_mix  = ifelse(class_annual != class_annual_prev1, 1, 0)
+  )
+
+# Each outcome against the post-2021 break, as in Table 1's equation 4.
+mix_change_post <- lm(
+  changed_mix ~ as.factor(class_annual_prev1) * as.factor(post_2021),
+  data = mix_change_sample, weights = as.numeric(FK060_4)
 )
 
-# Ext.self-employed
-selfemployer_extensive_margin_response <- lm(
-  entry_into_selfempincome ~ as.factor(type) * as.factor(post_2021),
-  data = margin_sample, weights = as.numeric(FK060_4)
-)
+# ==================================================================================================#
+# What "any change of mix" is made of
+# ==================================================================================================#
+
+# A household leaves its class in one of two quite different ways, and the binary above cannot tell
+# them apart. Either no source clears theta any more, so the household lands in the residual "Mixed"
+# state and nothing has replaced what it lived on - the household's own source was diluted. Or a
+# different source clears theta instead, and something has genuinely taken over.
+#
+# The three destinations below are mutually exclusive and between them exhaust a change, so on a
+# linear probability model fitted to the same sample with the same regressors their coefficients sum
+# to the coefficient on `changed_mix` exactly. The stopifnot() holds the arithmetic to that.
+earned_classes <- c("Laborer", "Self-employer", "Employer")
+
+mix_change_sample <-
+  mix_change_sample %>%
+  mutate(
+    to_no_dominant = ifelse(changed_mix == 1 & class_annual == "Mixed", 1, 0),
+    to_earned      = ifelse(changed_mix == 1 & class_annual %in% earned_classes, 1, 0),
+    to_unearned    = ifelse(changed_mix == 1 &
+                              !class_annual %in% c("Mixed", earned_classes), 1, 0)
+  )
+
+stopifnot(with(mix_change_sample,
+               all(to_no_dominant + to_earned + to_unearned == changed_mix)))
+
+destination_model <- function(outcome) {
+  lm(as.formula(paste(outcome, "~ as.factor(class_annual_prev1) * as.factor(post_2021)")),
+     data = mix_change_sample, weights = as.numeric(FK060_4))
+}
+
+mix_change_to_no_dominant <- destination_model("to_no_dominant")
+mix_change_to_earned      <- destination_model("to_earned")
+mix_change_to_unearned    <- destination_model("to_unearned")
 
 # Latex table
-modelsummary::modelsummary(
-  list(
-    "Ext.Labor" = labor_extensive_margin_response,
-    "Ext.Self-employer" = selfemployer_extensive_margin_response
+# noise down the side of the table. 
+tidy_coef_name <- function(x) {
+  x %>%
+    str_replace_all(fixed("as.factor(class_annual_prev1)"), "") %>%
+    str_replace_all(fixed("as.factor(post_2021)1"), "Post-2021") %>%
+    str_replace_all(fixed(":"), " $\\times$ ")
+}
+
+# modelsummary writes the caption 
+stars_note_option <- getOption("modelsummary_stars_note")
+options(modelsummary_stars_note = FALSE)
+
+# resize_direction = "down" shrinks the table to the text width when the row labels push it over and
+# leaves it alone when they do not, so the type never comes out larger than the body of the paper.
+income_mix_body <-
+  modelsummary::modelsummary(
+    list(
+      "Any change"        = mix_change_post,
+      "To no dominant"    = mix_change_to_no_dominant,
+      "To earned income"  = mix_change_to_earned,
+      "To other unearned" = mix_change_to_unearned
+    ),
+    stars       = TRUE,
+    coef_rename = tidy_coef_name,
+    gof_map     = c("nobs", "r.squared"),
+    output      = "tinytable"
+  ) %>%
+  tinytable::theme_latex(
+    environment_table = FALSE,
+    resize_width      = 1,
+    resize_direction  = "down"
+  ) %>%
+  tinytable::save_tt("latex")
+
+options(modelsummary_stars_note = stars_note_option)
+
+income_mix_note <- paste(
+  c(
+    "\\textit{Notes:} ",
+    "In column (1), the dependent variable is a dummy variable that reports whether the household's dominant",
+    "income source in year $t$ differs from the one it held in year $t-1$. Columns (2) to (4) decompose that change by where the",
+    "household's income mix ended up. Columns (2) to (4) are mutually exclusive, so they sum to column (1)",
+    "exactly. \\emph{To no dominant} means no income source reaches the benchmark dominance threshold any",
+    "longer; \\emph{to",
+    "earned income} means labor, self-employment or employer income became the dominant income sources; \\emph{to other",
+    "unearned} means pension, transfer, financial or rental income took over.",
+    "",
+    "The key explanatory variable in these models is the class the household did belong to in the \\emph{previous} year.",
+    "Contrast this with the four-year persistent class definition employed by the models discussed elsewhere in the paper.",
+    "Employer is the reference class. Homoskedastic standard errors in parentheses.",
+    "+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001."
   ),
-  stars = TRUE,
-  output = "latex"
+  collapse = "\n"
+)
+
+paste0(
+  "\\begin{table}[htbp]\n",
+  "\\centering\n",
+  "\\caption{Change in the Household's Dominant Income Source after 2021,\n",
+  "         by the Class It Held a Year Earlier}\n",
+  "\\label{tab:income-mix-response}\n",
+  income_mix_body,
+  "\n\n\\begin{minipage}{\\linewidth}\n",
+  "\\footnotesize\n",
+  # Table notes read as blocks, not as prose: no first-line indent, a little air between them.
+  "\\setlength{\\parindent}{0pt}\\setlength{\\parskip}{0.5em}\n",
+  income_mix_note,
+  "\n\\end{minipage}\n",
+  "\\end{table}\n"
 ) %>%
-  save_tex("outputs-included/table2-extensive-margin-response.tex")
+  save_tex("outputs-included/table2-income-mix-response-to-inflation.tex")
 
 # ==================================================================================================#
 # Table 3, Labor market adjusment
@@ -327,7 +620,11 @@ lm_model_3wayinteraction <- lm(
 )
 
 # Latex table
+# The caption and the label were empty here, which printed a bare "Table 3:" in the paper and left the
+# table impossible to \ref{}; the appendix table that prints this model in full refers to it by label.
 stargazer::stargazer(
   lm_model_3wayinteraction,
+  title = "Labor market adjustment and relative income mobility of laborer households",
+  label = "tab:labor-market-adjustment",
   out = "outputs-included/table3-labor-market-adjustment.tex"
 )
