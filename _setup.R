@@ -11,9 +11,11 @@ attached_packages <- c(
   "DBI", "haven"
 )
 
-#Only ever called as pkg::fun() — fixest and modelsummary in 10, stargazer in 10 and 11, getPass in
-#02-ingest-combined-micro — so they must be installed but are deliberately not attached.
-namespace_packages <- c("fixest", "modelsummary", "stargazer", "getPass")
+#Only ever called as pkg::fun() — fixest, modelsummary and tinytable in 10, stargazer in 10 and 11,
+#getPass in 02-ingest-combined-micro — so they must be installed but are deliberately not attached.
+#tinytable ships with modelsummary and renders its tables; 10 reaches for it directly to group the
+#columns and to resize the widest table to the text width.
+namespace_packages <- c("fixest", "modelsummary", "tinytable", "stargazer", "getPass")
 
 required_packages <- c(attached_packages, namespace_packages)
 
