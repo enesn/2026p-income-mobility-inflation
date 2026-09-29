@@ -61,20 +61,26 @@ class_mobility <-
 
 step_note("Fig 2: shares moving up, down or nowhere between t-1 and t, by class")
 
+# Table A1 in 11-appendix.R prints these same shares, so they are computed once here and read twice
+# rather than rebuilt from class_mobility a second time — the two cannot then drift apart.
+mobility_of_class_shares <-
+  class_mobility %>%
+  filter(!is.na(p_labor_entry2_contribution)) %>%
+  filter(!type == "Financier") %>%
+  filter(!type == "Rentier") %>%
+  mutate(mobility = ifelse( !(upward_2yr == 1 | downward_2yr == 1), "immobile", ifelse(upward_2yr == 1, "upward","downward"))) %>%
+  filter(income_year > 2011) %>%
+
+  group_by(income_year, type, mobility) %>%
+  # summarise(n=n()) %>%
+  summarise(n=sum(as.numeric(FK060_4)), obs = n() ) %>%
+  # filter(obs > 20) %>%
+
+  group_by(income_year, type) %>% mutate(sum=sum(n)) %>% mutate(p = n/sum) %>%
+  ungroup()
+
 (mobility_of_class <-
-    class_mobility %>% 
-    filter(!is.na(p_labor_entry2_contribution)) %>%
-    filter(!type == "Financier") %>% 
-    filter(!type == "Rentier") %>% 
-    mutate(mobility = ifelse( !(upward_2yr == 1 | downward_2yr == 1), "immobile", ifelse(upward_2yr == 1, "upward","downward"))) %>% 
-    filter(income_year > 2011) %>%
-    
-    group_by(income_year, type, mobility) %>% 
-    # summarise(n=n()) %>%
-    summarise(n=sum(as.numeric(FK060_4)), obs = n() ) %>%
-    # filter(obs > 20) %>%
-    
-    group_by(income_year, type) %>% mutate(sum=sum(n)) %>% mutate(p = n/sum) %>% 
+    mobility_of_class_shares %>%
     ggplot(aes(x=income_year, y = p*100)) +
     geom_col(aes(fill=mobility)) +
     facet_wrap(~type) +
