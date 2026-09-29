@@ -11,3 +11,4 @@ cached-micro-data/.dropbox_refresh
 
 # Answer to 00-run-all.R's ingest question: a property of this machine, not of the project.
 cached-micro-data/ingest-source 
+.git-rewrite/
