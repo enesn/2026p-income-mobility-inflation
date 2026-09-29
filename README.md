@@ -47,8 +47,8 @@ You can also run the scripts one by one: run [_setup.R](_setup.R) first, then th
 | [10-baseline-models.R](10-baseline-models.R) | Baseline regressions | Figure 4, Tables 1-3 |
 | [11-appendix.R](11-appendix.R) | Appendix tables | Tables A1-A6 |
 
-## Revision history
+## Version history
 
 1. **Original code**: [44a670f](https://github.com/enesn/2026p-income-mobility-inflation/commit/44a670ffe80a9986bbefd572b9893ad36ed3e643). This is the code as I wrote it for the first submission and the first two OEP revision rounds.
-2. **Reproducibility pass** (branch `cosmetic-for-better-replication`): [34 commits](https://github.com/enesn/2026p-income-mobility-inflation/compare/44a670ffe80a9986bbefd572b9893ad36ed3e643...632f81e81060ff4fa8fc7a7688a513f77a2b8a49). I reworked the original code with an AI coding assistant to make it easier to reproduce. The changes add a one-command pipeline, renv, cached data ingestion and progress output.
-3. **OEP R&R, round three** (branch `oep-RR-round-three`): [PR #1](https://github.com/enesn/2026p-income-mobility-inflation/pull/1). This covers the changes in response to the third-round reviewer comments; the PR lists all its commits and the full diff against step 2.
+2. **Reproducibility revision** (branch `cosmetic-for-better-replication`): [34 commits](https://github.com/enesn/2026p-income-mobility-inflation/compare/44a670ffe80a9986bbefd572b9893ad36ed3e643...632f81e81060ff4fa8fc7a7688a513f77a2b8a49). I reworked the original code with an AI coding assistant to make it easier to reproduce. The changes add a one-command pipeline, renv, cached data ingestion and progress output.
+3. **OEP R&R, round three** (branch `oep-RR-round-three`): [PR #1](https://github.com/enesn/2026p-income-mobility-inflation/pull/1). This covers the changes in response to the third-round reviewer comments.
