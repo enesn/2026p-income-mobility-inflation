@@ -46,3 +46,7 @@ You can also run the scripts one by one: run [_setup.R](_setup.R) first, then th
 | [09-mean-delta-rank.R](09-mean-delta-rank.R) | Average rank change of each class, year by year | Figure 3 |
 | [10-baseline-models.R](10-baseline-models.R) | Baseline regressions | Figure 4, Tables 1-3 |
 | [11-appendix.R](11-appendix.R) | Appendix tables | Tables A1-A6 |
+
+## Revision history
+
+- **OEP R&R, round three**: [PR #1](https://github.com/enesn/2026p-income-mobility-inflation/pull/1) (all commits and the full diff against the previous version)
