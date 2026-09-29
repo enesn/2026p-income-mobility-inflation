@@ -15,7 +15,7 @@ You need:
 1. **TUIK micro data (not included).** The eleven overlapping SILC panel releases, from 2008-2011 to 2021-2024. TUIK provides these under a micro data access agreement, and we cannot share them. Place them in [raw-micro-data/](raw-micro-data/) with the folder names and file layout TUIK uses.
 2. **Public macro series (included).** [other-input-data/](other-input-data/) holds inflation and exchange rates from the Central Bank's EVDS, the TUIK consumer price index used as the deflator, and the minimum wage.
 
-**If you already have TUIK micro data access** but not the eleven releases, we can give you access to a single file with the releases already merged to replicate the results. When the code asks which file to use, choose `202505/silc0824.parquet` (the May 2025 version). Other versions will not reproduce the published numbers.
+**If you already have TUIK micro data access**, we can give you access to a single file with the releases already merged to replicate the results. When the code asks which file to use, choose `202505/silc0824.parquet` (the May 2025 version). Other versions will not reproduce the published numbers.
 
 ## Running the code
 
