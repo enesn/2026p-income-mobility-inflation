@@ -1,16 +1,16 @@
 # Relative Income Mobility around an Inflationary Shock
 
-Replication files for the paper. The code uses the Turkish Statistical Institute (TUIK) SILC panel surveys to build a balanced four-year panel grouped by each household's persistent income source, and estimates how the 2018-2023 inflation episode shifted the groups across the distribution of income.
+Replication files for the paper. The code uses the Turkish Statistical Institute (TUIK) SILC panel surveys to build a balanced four-year panel grouped by each household's persistent income source, and estimates how the 2018-2023 inflation episode shifted households' income rank.
 
 Running the code reproduces all the figures and tables in the paper. All results are saved in [outputs-included/](outputs-included/): figures as PDF and tables as LaTeX.
 
 ## Requirements
 
-R 4.6. On the first run, the exact versions of the packages used in the paper will be installed, so there is no need to install them manually. Leave about 2 GB of disk space for the data.
+R 4.6. On the first run, the exact versions of the packages used in the paper will be installed, so there is no need to install them manually. 
 
 ## Data
 
-Things you'll need:
+Things you will need:
 
 1. TUIK micro data (not provided). The eleven overlapping panel releases, from 2008-2011 to 2021-2024. These are available from TUIK under a micro data access agreement, and we are unable to share them. Place them in [raw-micro-data/](raw-micro-data/), with the folder structure and filenames TUIK provides.
 2. Public macro series (provided). [other-input-data/](other-input-data/) contains inflation and exchange rates from the Central Bank's EVDS, the TUIK consumer price index used as the deflator, and the minimum wage.
